@@ -12,6 +12,7 @@ main {
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
+
 }
 
 h1 {
@@ -219,6 +220,10 @@ input:focus, select:focus {
     transition: all 0.3s ease;
 }
 
+
+.btn-audio{
+    color: black;
+}
 .btn-voice:hover {
     background: linear-gradient(45deg, #27ae60, #2ecc71);
     transform: scale(1.05);
