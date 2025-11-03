@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authority Dashboard - Sahaayak</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Authority Dashboard</h1>
+  </header>
+
+  <main>
+    <h2>📋 Reported Complaints</h2>
+    
+    <div class="filters">
+      <label>Filter by Status:
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </label>
+      <label>Filter by Category:
+        <select id="categoryFilter">
+          <option value="">All</option>
+          <option value="Road">Road</option>
+          <option value="Streetlight">Streetlight</option>
+          <option value="Sanitation">Sanitation</option>
+          <option value="Water">Water</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label>Filter by Date:
+        <input type="date" id="dateFilter">
+      </label>
+      <label>Filter by Priority:
+        <select id="priorityFilter">
+          <option value="">All</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </label>
+      <button class="btn" onclick="loadComplaints()">Apply Filters</button>
+      <button class="btn" onclick="clearFilters()">Clear All</button>
+    </div>
+ 
+    <div class="table-section">
+      <div id="loadingIndicator" class="loading-indicator">
+        <p>Loading complaints...</p>
+      </div>
+      <table id="complaintsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Citizen</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Photo</th>
+            <th>Voice</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Submitted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

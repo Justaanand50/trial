@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* CSS for the new camera feature */
+        .camera-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #camera-stream {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #000;
+        }
+        #capture-button {
+            margin-top: 10px;
+        }
+        #photo-canvas {
+            display: none;
+        }
+        /* NEW: Style for displaying the captured photo */
+        #captured-photo {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <span class="app-title">Sahaayak</span>
+        </div>
+    </header>
+    
+    <h2>Submit Civic Complaint</h2>
+
+    <form id="complaintForm" enctype="multipart/form-data">
+        <label for="citizen_name">Name:</label>
+        <input type="text" id="citizen_name" name="citizen_name" required placeholder="Enter your full name"><br><br>
+
+        <label for="description">Description:</label>
+        <div class="voice-input-container">
+            <input type="text" id="description" name="description" required placeholder="Describe the issue or use voice input">
+            <button type="button" id="voiceBtn" class="btn-voice" onclick="startVoiceInput()" title="Record Voice Description">
+                🎤 Record
+            </button>
+        </div>
+        <div id="voiceStatus" class="voice-status"></div><br>
+
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+            <option value="Road">Road Issues</option>
+            <option value="Streetlight">Streetlight</option>
+            <option value="Sanitation">Sanitation</option>
+            <option value="Water">Water Supply</option>
+            <option value="Other">Other</option>
+        </select><br><br>
+
+        <label>Photo:</label>
+        <div class="camera-container">
+            <video id="camera-stream" playsinline autoplay muted></video>
+            <img id="captured-photo" alt="Captured Photo" style="display: none;">
+            <button type="button" id="capture-button" class="btn">Take Photo 📸</button>
+        </div>
+        <canvas id="photo-canvas"></canvas>
+        <p id="photo-status" class="photo-status"></p>
+        <input type="hidden" id="photo-data" name="photo_data">
+        
+        <label>Voice Note (Optional):</label>
+        <div class="voice-recording-container">
+            <button type="button" id="recordBtn" class="btn" onclick="startRecording()">🎤 Record</button>
+            <button type="button" id="stopBtn" class="btn" onclick="stopRecording()" disabled>⏹️ Stop</button>
+            <button type="button" id="playBtn" class="btn" onclick="playRecording()" disabled>▶️ Play</button>
+            <button type="button" id="clearBtn" class="btn" onclick="clearRecording()" disabled>🗑️ Clear</button>
+        </div>
+        <div id="recordingStatus" class="recording-status"></div>
+        <audio id="audioPlayback" controls class="audio-playback"></audio><br>
+
+        <p><b>Your Location:</b></p>
+        <p id="latlong">Detecting...</p>
+        <p id="address">Detecting...</p>
+        <button type="button" onclick="getLocation()">Retry Location</button>
+
+        <input type="hidden" id="latitude" name="latitude">
+        <input type="hidden" id="longitude" name="longitude">
+        <input type="hidden" id="addressInput" name="address">
+
+        <button type="submit" class="btn">Submit Complaint</button>
+    </form>
+
+    <div id="trackingStatus" style="display:none; margin-top:20px;"></div>
+
+    <script>
+        // Start of new camera-specific JavaScript
+        const video = document.getElementById('camera-stream');
+        const captureButton = document.getElementById('capture-button');
+        const canvas = document.getElementById('photo-canvas');
+        const photoStatus = document.getElementById('photo-status');
+        const photoDataInput = document.getElementById('photo-data');
+        // New image element for displaying the photo
+        const capturedPhoto = document.getElementById('captured-photo');
+        
+        let mediaStream = null;
+
+        async function startCamera() {
+            try {
+                // Request access to the video stream, specifically the rear-facing camera
+                const constraints = { video: { facingMode: 'environment' } };
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = mediaStream;
+                photoStatus.textContent = 'Camera ready. Tap the button to take a picture.';
+                captureButton.disabled = false;
+                video.style.display = 'block'; // Show video stream
+                capturedPhoto.style.display = 'none'; // Hide captured photo
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                photoStatus.textContent = 'Error: Could not access camera. Please check permissions.';
+                captureButton.disabled = true;
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert the canvas image to a data URL and set it to a hidden input
+            const photoData = canvas.toDataURL('image/jpeg');
+            photoDataInput.value = photoData;
+            photoStatus.textContent = 'Photo taken successfully! It will be submitted with your complaint.';
+            
+            // Display the captured photo and hide the camera stream
+            capturedPhoto.src = photoData;
+            capturedPhoto.style.display = 'block';
+            video.style.display = 'none';
+            stopCamera();
+        });
+        
+        // Start the camera when the page loads
+        document.addEventListener('DOMContentLoaded', startCamera);
+        
+        // Stop camera when navigating away
+        window.addEventListener('beforeunload', stopCamera);
+
+        // End of new camera-specific JavaScript
+        // --------------------------------------------------------------------------------------------------------------------------------
+        
+        // ---------- Existing Voice Input & Recording, GPS & Reverse Geocoding, Form Submission & Tracking ----------
+        let recognition, isRecording = false;
+        let mediaRecorder, audioChunks = [], recordedAudioBlob = null, audioStream = null;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                document.getElementById('voiceBtn').textContent = '🔴 Stop';
+                document.getElementById('voiceBtn').classList.add('recording');
+                document.getElementById('voiceStatus').textContent = 'Listening... Speak now';
+            };
+
+            recognition.onresult = (event) => {
+                document.getElementById('description').value = event.results[0][0].transcript;
+                document.getElementById('voiceStatus').textContent = 'Voice recorded successfully!';
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                document.getElementById('voiceStatus').textContent = 'Error: ' + event.error;
+                resetVoiceButton();
+            };
+
+            recognition.onend = resetVoiceButton;
+        } else {
+            document.getElementById('voiceBtn').style.display = 'none';
+        }
+
+        function startVoiceInput() {
+            if (!recognition) return;
+            isRecording ? recognition.stop() : recognition.start();
+        }
+
+        function resetVoiceButton() {
+            isRecording = false;
+            document.getElementById('voiceBtn').textContent = '🎤 Record';
+            document.getElementById('voiceBtn').classList.remove('recording');
+        }
+
+        async function startRecording() {
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(audioStream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    document.getElementById('playBtn').disabled = false;
+                    document.getElementById('clearBtn').disabled = false;
+                    document.getElementById('recordingStatus').textContent = 'Recording completed! Click Play to review.';
+                    document.getElementById('recordingStatus').style.color = '#28a745';
+                    audioStream.getTracks().forEach(t => t.stop());
+                };
+
+                mediaRecorder.start();
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('recordingStatus').textContent = 'Recording... Click Stop when finished.';
+                document.getElementById('recordingStatus').style.color = '#dc3545';
+            } catch (error) {
+                console.error('Microphone error:', error);
+                document.getElementById('recordingStatus').textContent = 'Error: Could not access microphone.';
+                document.getElementById('recordingStatus').style.color = '#dc3545';
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            document.getElementById('recordBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        }
+
+        function playRecording() {
+            if (recordedAudioBlob) {
+                const audioUrl = URL.createObjectURL(recordedAudioBlob);
+                const audioPlayback = document.getElementById('audioPlayback');
+                audioPlayback.src = audioUrl;
+                audioPlayback.style.display = 'block';
+                audioPlayback.play();
+                document.getElementById('recordingStatus').textContent = 'Playing recording...';
+            }
+        }
+
+        function clearRecording() {
+            recordedAudioBlob = null; audioChunks = [];
+            if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+            document.getElementById('recordBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('clearBtn').disabled = true;
+            document.getElementById('audioPlayback').style.display = 'none';
+            document.getElementById('recordingStatus').textContent = 'Recording cleared.';
+        }
+
+        // ---------- GPS & Reverse Geocoding ----------
+        async function getLocation() {
+            const latEl = document.getElementById('latitude');
+            const lonEl = document.getElementById('longitude');
+            const latlongEl = document.getElementById('latlong');
+            const addressEl = document.getElementById('address');
+            const addressInput = document.getElementById('addressInput');
+
+            if (!navigator.geolocation) {
+                latlongEl.innerText = 'Geolocation not supported';
+                addressEl.innerText = 'Geolocation not supported';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    latEl.value = lat; lonEl.value = lon;
+                    latlongEl.innerText = `Latitude: ${lat}, Longitude: ${lon}`;
+
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                        const data = await res.json();
+                        const address = data.display_name || "Address not found";
+                        addressEl.innerText = `Address: ${address}`;
+                    } catch (err) {
+                        console.error('Reverse geocoding failed:', err);
+                        addressEl.innerText = 'Address not available';
+                    }
+                },
+                (err) => {
+                    console.error('Geolocation error:', err);
+                    let msg = '';
+                    switch (err.code) {
+                        case err.PERMISSION_DENIED: msg = 'User denied the request for Geolocation.'; break;
+                        case err.POSITION_UNAVAILABLE: msg = 'Location information is unavailable.'; break;
+                        case err.TIMEOUT: msg = 'Request timed out.'; break;
+                        default: msg = 'An unknown error occurred.'; break;
+                    }
+                    latlongEl.innerText = msg; addressEl.innerText = msg;
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        // Initial call
+        getLocation();
+
+        // ---------- Form Submission & Tracking ----------
+        let trackingId = null, lastStatus = null, pollInterval = null;
+        document.getElementById('complaintForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData();
+            
+            // Append all form data
+            formData.append('citizen_name', document.getElementById('citizen_name').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('category', document.getElementById('category').value);
+            formData.append('latitude', document.getElementById('latitude').value);
+            formData.append('longitude', document.getElementById('longitude').value);
+            formData.append('address', document.getElementById('addressInput').value);
+
+            // Append the image data from the canvas
+            const imageData = photoDataInput.value;
+            if (imageData) {
+                const byteString = atob(imageData.split(',')[1]);
+                const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const photoBlob = new Blob([ab], { type: mimeString });
+                formData.append('photo', photoBlob, 'captured_photo.jpg');
+            }
+
+            if (recordedAudioBlob) {
+                formData.append('voice_note', recordedAudioBlob, 'voice_recording.webm');
+            }
+
+            fetch('/submit', { method: 'POST', body: formData })
+                .then(r => r.text())
+                .then(data => {
+                    let match = data.match(/ID\s*[:=]\s*(\d+)/i);
+                    trackingId = match ? match[1] : null;
+
+                    document.getElementById("trackingStatus").style.display = "block";
+                    document.getElementById("trackingStatus").innerHTML = `✅ Complaint submitted!<br>Your tracking ID is: <b>${trackingId ? trackingId : 'N/A'}</b>. Status: <span id='trackStatusBadge' class='status pending'>Pending</span>`;
+
+                    this.reset();
+                    clearRecording();
+                    getLocation();
+                    stopCamera(); // Stop the camera after submission
+
+                    if (trackingId) {
+                        lastStatus = 'Pending';
+                        pollInterval = setInterval(() => pollStatus(trackingId), 15000);
+                    }
+                })
+                .catch(err => alert('Error: ' + err));
+        });
+
+        async function pollStatus(id) {
+            try {
+                const res = await fetch(`/api/complaints?id=${id}`);
+                const complaints = await res.json();
+                if (!complaints || complaints.length === 0) return;
+
+                const status = complaints[0].status;
+                const badge = document.getElementById('trackStatusBadge');
+                badge.textContent = status;
+                badge.className = 'status ' + (status === 'Resolved' ? 'resolved' : (status === 'In Progress' ? 'inprogress' : 'pending'));
+
+                if (status !== lastStatus) {
+                    sendStatusNotification(status);
+                    lastStatus = status;
+                }
+                if (status === 'Resolved' && pollInterval) clearInterval(pollInterval);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function sendStatusNotification(status) {
+            if (window.Notification && Notification.permission === "granted") {
+                new Notification(`Complaint Status Updated: ${status}`);
+            } else if (window.Notification && Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") new Notification(`Complaint Status Updated: ${status}`);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

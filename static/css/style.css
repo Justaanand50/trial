@@ -1,0 +1,258 @@
+/* --- Global & Typography (General App Styles) --- */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f7f9;
+    color: #34495e;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+h1 {
+    font-size: 2em;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+}
+
+h2 {
+    text-align: center;
+    color: #2c3e50;
+    font-size: 2.2em;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/* --- New Header Section --- */
+header {
+    background-color: #ffffff;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.app-logo {
+    width: 60px;
+    height: auto;
+}
+
+.app-title {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #2c3e50;
+    letter-spacing: 1px;
+}
+
+/* --- LOGO TEXT STYLING --- */
+.logo-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.5em;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Form Container & Elements --- */
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    margin-top: 15px;
+}
+
+input[type="text"], select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    color: #333;
+    background-color: #f8f9fa;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.2);
+}
+
+/* --- Camera Interface Styling --- */
+.camera-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Added spacing between video and button */
+    margin-bottom: 20px;
+}
+
+#camera-stream {
+    width: 100%;
+    max-width: 400px;
+    height: auto; /* Ensures aspect ratio is maintained */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #000;
+    display: block; /* Ensures it behaves as a block element */
+}
+
+#capture-button {
+    margin-top: 0; /* Align with the new gap */
+}
+
+#photo-canvas {
+    display: none;
+}
+
+/* --- Voice & Audio Styling --- */
+.voice-input-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.voice-input-container input {
+    flex-grow: 1;
+}
+
+.voice-status, .recording-status {
+    font-size: 0.9em;
+    font-style: italic;
+    margin-top: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: #f0f4f7;
+    border: 1px solid #dcdfe4;
+}
+
+/* Redesigned button layout for audio controls */
+.voice-recording-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    justify-content: center;
+}
+.voice-recording-container .btn-audio {
+    flex: 1 1 auto; /* Let buttons grow and shrink based on content */
+    padding: 10px;
+    min-width: 80px; /* Smaller minimum width for better fit */
+}
+
+/* --- Location & Tracking Styling --- */
+.location-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+.btn-location {
+    padding: 10px 20px;
+    font-size: 1em;
+}
+
+/* --- Main Buttons --- */
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn:hover {
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-voice {
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 50px;
+    white-space: nowrap;
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+    transition: all 0.3s ease;
+}
+
+.btn-voice:hover {
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    transform: scale(1.05);
+}
+
+.btn-voice.recording {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+.audio-playback {
+    width: 100%;
+    margin-top: 15px;
+    display: none;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+    form {
+        padding: 20px;
+        border-radius: 0;
+    }
+    .voice-input-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+}

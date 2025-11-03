@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Complaints - Sahaayak</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/my_complaints.js') }}" defer></script>
+</head>
+<body>
+  <header>
+    <h1>My Complaints</h1>
+    <div class="user-profile">Citizen Portal</div>
+  </header>
+
+  <main>
+    <div class="filters">
+      <label>Your Name: 
+        <input type="text" id="citizenName" placeholder="Enter your name" required>
+      </label>
+      <label>Filter by Status:
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+        </select>
+      </label>
+      <label>Sort by:
+        <select id="sortFilter">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+        </select>
+      </label>
+      <button class="btn" onclick="loadMyComplaints()">Load My Complaints</button>
+    </div>
+
+    <div class="table-section">
+      <h2>📋 My Submitted Complaints</h2>
+      <div id="loadingIndicator" class="loading-indicator">
+        <p>Loading complaints...</p>
+      </div>
+      <table id="myComplaintsTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Photo</th>
+            <th>Tracking Status</th>
+            <th>Submitted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeFeedbackModal()">&times;</span>
+        <h3>Rate Your Experience</h3>
+        <form id="feedbackForm">
+          <input type="hidden" id="complaintId" name="complaintId">
+          <label>Rating (1-5 stars):
+            <select id="rating" name="rating" required>
+              <option value="">Select rating</option>
+              <option value="1">1 - Poor</option>
+              <option value="2">2 - Fair</option>
+              <option value="3">3 - Good</option>
+              <option value="4">4 - Very Good</option>
+              <option value="5">5 - Excellent</option>
+            </select>
+          </label>
+          <label>Additional Feedback:
+            <textarea id="feedback" name="feedback" placeholder="Optional feedback about the resolution..."></textarea>
+          </label>
+          <button type="submit" class="btn">Submit Feedback</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Auto-refresh every 20 seconds | <a href="/submit">Submit New Complaint</a></p>
+  </footer>
+</body>
+</html>
